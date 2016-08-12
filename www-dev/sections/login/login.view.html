@@ -1,0 +1,19 @@
+<ion-view view-title="Login">
+	<ion-content ng-controller="LoginCtrl as lctrl">
+		<h1>Login</h1>
+		<div class="content has-header">
+	      	<div class="list">
+				<label class="item item-input">
+					<input type="text" name="username" ng-model="lctrl.formData.username" >
+				</label>
+				<label class="item item-input">
+					<input type="password" name="password" ng-model="lctrl.formData.password" >
+				</label>
+	      	</div>
+	      	<div class="padding">
+        		<button ng-click="logar()" class="button button-block button-positive">Login</button>
+	      	</div>
+	      	<div class="clearfix"></div>
+	    </div>
+	</ion-content>
+</ion-view>

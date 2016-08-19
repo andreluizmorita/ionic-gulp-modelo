@@ -14,6 +14,15 @@ var paths = {
 	folderDist: 'www'
 };
 
+var jshint = require('gulp-jshint');
+var sourcemaps = require('gulp-sourcemaps');
+var uglify = require('gulp-uglify');
+var imageop = require('gulp-image-optimization');
+var htmlmin = require('gulp-html-minifier');
+var deletefile = require('gulp-delete-file');
+var webserver = require('gulp-webserver');
+var del = require('del');
+
 gulp.task('default', ['ionic-sass']);
 
 gulp.task('ionic-sass', function(done) {
@@ -48,28 +57,27 @@ gulp.task('git-check', function(done) {
 	done();
 });
 
-var jshint = require('gulp-jshint');
-var sourcemaps = require('gulp-sourcemaps');
-var uglify = require('gulp-uglify');
-
-// define the default task and add the watch task to it
 gulp.task('watch-jshint', ['watch-js']);
 
-// configure the jshint task
 gulp.task('jshint', function() {
 	return gulp.src([paths.folderDev+'/sections/**/*.js'])
 		.pipe(jshint())
 		.pipe(jshint.reporter('jshint-stylish'));
 });
 
-// configure which files to watch and what tasks to use on file changes
 gulp.task('watch-js', function() {
 	gulp.watch([paths.folderDev+'/sections/**/*.js'], ['jshint']);
 });
 
-// configure which files to watch and what tasks to use on file changes
 gulp.task('watch-css', function() {
 	gulp.watch([paths.folderDev+'/sections/**/*.css'], ['concat-css']);
+});
+
+gulp.task('watch-dev-concat', function() {
+	gulp.watch([
+		paths.folderDev+'/sections/**/*.css',
+		paths.folderDev+'/sections/**/*.js',
+	], ['concat-js','concat-css']);
 });
 
 gulp.task('concat-js', function() {
@@ -101,10 +109,13 @@ gulp.task('minify-js', function (done) {
     
 });
 
-var imageop = require('gulp-image-optimization');
- 
 gulp.task('minify-images', function(cb) {
-    gulp.src([paths.folderDev+'/assets/img/**/*.png',paths.folderDev+'/assets/img/**/*.jpg',paths.folderDev+'/assets/img/**/*.gif',paths.folderDev+'/assets/img/**/*.jpeg'])
+    gulp.src([
+    	paths.folderDev+'/assets/img/**/*.png',
+    	paths.folderDev+'/assets/img/**/*.jpg',
+    	paths.folderDev+'/assets/img/**/*.gif',
+    	paths.folderDev+'/assets/img/**/*.jpeg'
+    ])
     .pipe(imageop({
         optimizationLevel: 5,
         progressive: true,
@@ -113,8 +124,6 @@ gulp.task('minify-images', function(cb) {
     .pipe(gulp.dest(paths.folderDist+'/assets/img'))
 	.on('end', cb).on('error', cb);
 });
-
-var htmlmin = require('gulp-html-minifier');
 
 gulp.task('minify-html', function() {
   	return gulp.src([paths.folderDev+'/sections/**/*.html'])
@@ -130,8 +139,6 @@ gulp.task('copy-vendors', function() {
         .pipe(gulp.dest(paths.folderDist+'/vendors'));
     
 });
-
-var deletefile = require('gulp-delete-file');
 
 gulp.task('copy-index', function(){
 	 return gulp.src(paths.folderDev+'/index-dist.html')
@@ -153,5 +160,75 @@ gulp.task('build-dist', [
 	'copy-vendors',
 	'copy-index'
 ]);
+ 
+gulp.task('index-server-dev', function() {
+	del([paths.folderDev+'/index.html']);
+	
+	gulp.src(paths.folderDev+'/dev.html')
+		.pipe(rename('index.html'))
+        .pipe(gulp.dest('./'+paths.folderDev));
+});
+
+gulp.task('index-server-dist', function() {
+	del([paths.folderDev+'/index.html']);
+	
+	gulp.src(paths.folderDev+'/dist.html')
+		.pipe(rename('index.html'))
+        .pipe(gulp.dest('./'+paths.folderDev));
+});
+
+gulp.task('server-dev-concat', function() {
+  	gulp.src('./www-dev')
+	    .pipe(webserver({
+	    	host:'localhost',
+	    	port:8001,
+	    	//directoryListing: { path: 'www-dev' },
+	  		livereload: false,
+			//directoryListing: true,
+	      	open: true
+	    }));
+});
+
+gulp.task('server-dev', function() {
+  	gulp.src('./www-dev')
+	    .pipe(webserver({
+	    	host:'localhost',
+	    	port:8001,
+	    	//directoryListing: { path: 'www-dev' },
+	  		livereload: true,
+			//directoryListing: true,
+	      	open: true
+	    }));
+});
+
+gulp.task('server-build', function() {
+  	gulp.src('./www')
+	    .pipe(webserver({
+	    	host:'localhost',
+	    	port:8001,
+	  		livereload: true,
+			//directoryListing: true,
+	      	open: true
+	    }));
+});
+
+gulp.task('webserver-build', ['build-dist','index-server-dist','server-build']);
+
+gulp.task('webserver-dev', ['index-server-dev','server-dev','watch-jshint']);
+
+gulp.task('webserver-dev-concat', [
+	'ionic-sass',
+	'concat-css',
+	'minify-css',
+	'concat-js',
+	'minify-js',
+	'index-server-dist',
+	'server-dev',
+	'watch-jshint',
+	'watch-dev-concat'
+]);
+
+
+
 
 

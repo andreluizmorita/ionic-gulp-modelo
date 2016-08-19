@@ -21,24 +21,29 @@ function LoginCtrl ($state,$scope,$http,$timeout,APP,LoginFactory,ProfileFactory
         vm.postData = {
             username: vm.formData.username, 
             password: vm.formData.password,
-            client_id: APP.system.client_id,
-            client_secret: APP.system.client_secret,
-            grant_type: 'password',
+            client_id: APP.auth.client_id,
+            client_secret: APP.auth.client_secret,
+            grant_type: APP.auth.grant_type,
             version_api: APP.system.version_api,
             version_app: APP.system.version_app
         };
 
         LoginFactory.login( vm.postData,
             function(response) {
-                
-                APP.user.oauth = {
-                    access_token: response.access_token,
-                    refresh_token: response.refresh_token,
-                    expires_in: response.expires_in,
-                    token_type: response.token_type
-                };
+                console.log(typeof response.access_token);
 
-                $scope.perfil();
+                if(typeof response.access_token != 'undefined' && typeof response.refresh_token != 'undefined' )
+                {
+                    APP.user.oauth = {
+                        access_token: response.access_token,
+                        refresh_token: response.refresh_token,
+                        expires_in: response.expires_in,
+                        token_type: response.token_type
+                    };
+
+                    $scope.perfil();
+                }
+                
             }, 
             function(response) {
                 console.log(response);
@@ -46,7 +51,7 @@ function LoginCtrl ($state,$scope,$http,$timeout,APP,LoginFactory,ProfileFactory
     }
 
     function perfil(){
-        ProfileFactory.get({access_token:APP.user.oauth.access_token},
+        ProfileFactory.get({},
             function(response){
                 console.log(response);
             });

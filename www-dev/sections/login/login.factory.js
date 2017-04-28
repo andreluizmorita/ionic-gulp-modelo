@@ -9,13 +9,13 @@ LoginFactory.$inject = ['$resource','$state','APP'];
 
 function LoginFactory ($resource,$state,APP) {
 
-    var url = APP.system.url+APP.system.version_api+'/login';
+    var url = APP.system.urlOauth+'oauth/token';
 
     var paramDefaults = {email: '@user', password: '@pass' };
     
     var actions = {
-        'login':{ method: 'POST', timeout:APP.system.timeout }
-    };
+        'login':{ method: 'POST',timeout:APP.system.timeout}
+    }; 
 
     return $resource(url, paramDefaults, actions);
 }

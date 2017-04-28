@@ -2,9 +2,13 @@
 'use strict';
 
 angular
-.module('app.run', [])
-.run(['$rootScope','$location','$state','$ionicPlatform','APP',function ($rootScope, $location,$state,$ionicPlatform,APP) {
-    
+.module('app.module')
+.run(run);
+
+run.$inject = ['$rootScope','$location','$state','$ionicPlatform','APP','PassportService'];
+
+function run($rootScope, $location,$state,$ionicPlatform,APP,PassportService){
+
     $ionicPlatform.ready(function() {
         if (window.cordova && window.cordova.plugins.Keyboard) {
             cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
@@ -16,16 +20,6 @@ angular
         }
     });
 
-    $rootScope.$on("$stateChangeStart", function(event, next, current){
-        console.log(next);
-
-        if(next.loginRequired){
-            if(APP.user.oauth.access_token) {
-                console.log(APP.user.oauth.access_token.lenght);
-            }
-        }
-    });
-
     // Loading
     $rootScope.$on('loading:show', function() {
         $ionicLoading.show({template:'<ion-spinner></ion-spinner>'});
@@ -34,7 +28,26 @@ angular
     $rootScope.$on('loading:hide', function(){
         $ionicLoading.hide();
     });
+   
+    $rootScope.$on("$stateChangeStart", function(event, next, current){
+            
+        if(next.loginRequired === true){
 
-}]);
+            // if (PassportService.getToken()!==false) {
+
+            //     if(typeof APP.user.passport.access_token === 'undefined' || APP.passport.authenticated === false) {
+            //         if(next.name != 'login'){
+            //             $location.path('login').replace();
+            //         }
+            //     } 
+            // }
+
+            console.info('RUN: TRUE',next); 
+        }else{
+            console.info('RUN: FALSE',next);
+        }
+
+    });
+}
 
 })();

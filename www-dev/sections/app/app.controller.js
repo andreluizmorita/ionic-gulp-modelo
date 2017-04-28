@@ -5,10 +5,10 @@ angular
 .module('app.module')
 .controller('AppCtrl',AppCtrl);
 
-AppCtrl.$inject = ['$state','$scope','APP','HttpInterceptorFactory'];
+AppCtrl.$inject = ['$timeout', '$state', '$scope', 'AppService','APP'];
 
-function AppCtrl ($state,$scope,APP,HttpInterceptorFactory){  
+function AppCtrl ($timeout, $state, $scope, AppService,APP){  
     var vm = this;
-
+    
 }
 })();

@@ -1,0 +1,22 @@
+.dashboard-box .dashboard-boxes {
+  padding: 8px;
+  margin-bottom: 25px;
+}
+.dashboard-box .dashboard-boxes small,
+.dashboard-box .dashboard-boxes h2 {
+  color: #fff;
+  text-align: center;
+}
+.dashboard-box .dashboard-boxes small {
+  display: block;
+  font-size: 13and
+
+		px;
+  padding: 0;
+}
+.dashboard-box .dashboard-boxes h2 {
+  font-size: 28px;
+  font-weight: normal;
+  margin: 0;
+  padding: 5px 0 0 0;
+}

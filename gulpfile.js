@@ -1,3 +1,5 @@
+'use strict';
+
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var bower = require('bower');
@@ -7,13 +9,6 @@ var minifyCss = require('gulp-minify-css');
 var cleanCSS = require('gulp-clean-css');
 var rename = require('gulp-rename');
 var sh = require('shelljs');
-
-var paths = {
-	sass: ['./scss/**/*.scss'],
-	folderDev: 'www-dev',
-	folderDist: 'www'
-};
-
 var jshint = require('gulp-jshint');
 var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify');
@@ -22,91 +17,118 @@ var htmlmin = require('gulp-html-minifier');
 var deletefile = require('gulp-delete-file');
 var webserver = require('gulp-webserver');
 var del = require('del');
+var path = require('path');
+var less = require('gulp-less');
+var connect = require('gulp-connect');
+var open = require('gulp-open');
 
-gulp.task('default', ['ionic-sass']);
+var paths = {
+	ionicSass: ['./scss/**/*.scss'],
+	folderDist: './www',
+	folderHtml: './www-dev/sections/**/*.html',
+	folderSass: './www-dev/sections/**/*.scss',
+	folderLess: './www-dev/sections/**/*.less',
+	folderDev: './www-dev',
+	folderJs: [
+		'./www-dev/sections/**/*.module.js',
+		'./www-dev/sections/**/*.*.js',
+		'./www-dev/sections/**/*.js',
+		'./www-dev/app.js'
+	],
+	folderCss:[
+		'./www-dev/sections/**/*.css'
+	]
+};
 
 gulp.task('ionic-sass', function(done) {
-
 	gulp.src('./scss/ionic.app.scss')
 		.pipe(sass())
 		.on('error', sass.logError)
-		.pipe(gulp.dest(paths.folderDev+'/sections/app/'))
+		.pipe(gulp.dest(paths.folderDev+'/sections/app/scss/'))
 });
 
-gulp.task('watch', function() {
-	gulp.watch(paths.sass, ['sass']);
+gulp.task('sections-sass', function(done) {
+	return gulp.src([
+		paths.folderSass,
+		'!www-dev/sections/**/inc/*',
+		'!www-dev/sections/**/inc/**/*'
+	])
+	.pipe(sass())
+	.on('error', sass.logError)
+	.pipe(gulp.dest(paths.folderDev+'/sections/'))
 });
 
-gulp.task('install', ['git-check'], function() {
-	return bower.commands.install()
-		.on('log', function(data) {
-			gutil.log('bower', gutil.colors.cyan(data.id), data.message);
-		});
-});
+gulp.task('sections-less', function () {
+  	return gulp.src([
+  		paths.folderLess,
+		'!www-dev/sections/**/inc/*',
+		'!www-dev/sections/**/inc/**/*'
+  	])
+    .pipe(less())
+    .pipe(gulp.dest(paths.folderDev+'/sections/'));
 
-gulp.task('git-check', function(done) {
-	if (!sh.which('git')) {
-		console.log(
-			'  ' + gutil.colors.red('Git is not installed.'),
-			'\n  Git, the version control system, is required to download Ionic.',
-			'\n  Download git here:', gutil.colors.cyan('http://git-scm.com/downloads') + '.',
-			'\n  Once git is installed, run \'' + gutil.colors.cyan('gulp install') + '\' again.'
-		);
-		process.exit(1);
-	}
-	done();
 });
-
-gulp.task('watch-jshint', ['watch-js']);
 
 gulp.task('jshint', function() {
-	return gulp.src([paths.folderDev+'/sections/**/*.js'])
-		.pipe(jshint())
-		.pipe(jshint.reporter('jshint-stylish'));
-});
-
-gulp.task('watch-js', function() {
-	gulp.watch([paths.folderDev+'/sections/**/*.js'], ['jshint']);
-});
-
-gulp.task('watch-css', function() {
-	gulp.watch([paths.folderDev+'/sections/**/*.css'], ['concat-css']);
-});
-
-gulp.task('watch-dev-concat', function() {
-	gulp.watch([
-		paths.folderDev+'/sections/**/*.css',
+	return gulp.src([
+		paths.folderDev+'/sections/**/*.module.js',
 		paths.folderDev+'/sections/**/*.js',
-	], ['concat-js','concat-css']);
+		paths.folderDev+'/app.js'
+	])
+	.pipe(jshint())
+	.pipe(jshint.reporter('jshint-stylish'));
+});
+
+gulp.task('html', function () {
+  	console.log('html-reload');
+  	
+  	gulp.src([
+  		paths.folderHtml
+  	])
+    .pipe(connect.reload());
 });
 
 gulp.task('concat-js', function() {
-	return gulp.src([paths.folderDev+'/sections/**/*.module.js',paths.folderDev+'/sections/**/*.js',paths.folderDev+'/app.js'])
-		.pipe(sourcemaps.init())
-		.pipe(concat('scripts.js'))
-		.pipe(sourcemaps.write())
-		.pipe(gulp.dest(paths.folderDev+'/assets/js/'));
+	return gulp.src([
+		paths.folderDev+'/sections/**/*.module.js',
+		paths.folderDev+'/sections/**/*.service.js',
+		paths.folderDev+'/sections/**/*.factory.js',
+		paths.folderDev+'/sections/**/*.run.js',
+		paths.folderDev+'/sections/**/*.route.js',
+		paths.folderDev+'/sections/**/*.js',
+		paths.folderDev+'/app.js'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('scripts.js'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDev+'/assets/js/'))
+	.pipe(gulp.dest(paths.folderDist+'/assets/js/'))
+	.pipe(connect.reload());
 });
 
 gulp.task('concat-css', function() {
-	return gulp.src(paths.folderDev+'/sections/**/*.css')
-		.pipe(sourcemaps.init())
-		.pipe(concat('styles.css'))
-		.pipe(sourcemaps.write())
-		.pipe(gulp.dest(paths.folderDev+'/assets/css/'));
+	return gulp.src([
+		paths.folderDev+'/sections/**/*.css'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('styles.css'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDev+'/assets/css/'))
+	.pipe(gulp.dest(paths.folderDist+'/assets/css/'))
+	.pipe(connect.reload());
 });
 
+/* --- MINIFY ------------------------------ */
 gulp.task('minify-css', function() {
-  return gulp.src(paths.folderDev+'/assets/css/styles.css')
-    .pipe(cleanCSS({compatibility: 'ie8'}))
+  	return gulp.src(paths.folderDev+'/assets/css/styles.css')
+	.pipe(cleanCSS({compatibility: 'ie8'}))
     .pipe(gulp.dest(paths.folderDist+'/assets/css'));
 });
 
 gulp.task('minify-js', function (done) {
 	return gulp.src(paths.folderDev+'/assets/js/*.js')
-        .pipe(uglify())
-        .pipe(gulp.dest(paths.folderDist+'/assets/js'));
-    
+    .pipe(uglify())
+    .pipe(gulp.dest(paths.folderDist+'/assets/js'));
 });
 
 gulp.task('minify-images', function(cb) {
@@ -126,42 +148,34 @@ gulp.task('minify-images', function(cb) {
 });
 
 gulp.task('minify-html', function() {
-  	return gulp.src([paths.folderDev+'/sections/**/*.html'])
-		.pipe(htmlmin({
-			collapseWhitespace: true,
-			removeComments: true
-		}))
-		.pipe(gulp.dest(paths.folderDist+'/sections'));
+  	return gulp.src([paths.folderHtml])
+	.pipe(htmlmin({
+		collapseWhitespace: true,
+		removeComments: true
+	}))
+	.pipe(gulp.dest(paths.folderDist+'/sections'));
 });
 
 gulp.task('copy-vendors', function() {
-	return  gulp.src([paths.folderDev+'/vendors/**/*'])
-        .pipe(gulp.dest(paths.folderDist+'/vendors'));
+	return  gulp.src([
+		paths.folderDev+'/vendors/**/*'
+	])
+    .pipe(gulp.dest(paths.folderDist+'/vendors'));
     
 });
 
-gulp.task('copy-index', function(){
-	 return gulp.src(paths.folderDev+'/index-dist.html')
-   		.pipe(rename(paths.folderDist+'/index.html'))
-		.pipe(htmlmin({
-			collapseWhitespace: true,
-			removeComments:true
-		}))
-		.pipe(gulp.dest('./'));
+gulp.task('copy-fonts', function(){
+ 	return gulp.src([
+		paths.folderDev+'/assets/fonts/**/*'
+	])
+    .pipe(gulp.dest(paths.folderDist+'/assets/fonts'));
 });
 
-gulp.task('build-dist', [
-	'concat-css',
-	'concat-js',
-	'minify-css',
-	'minify-js',
-	'minify-images',
-	'minify-html',
-	'copy-vendors',
-	'copy-index'
-]);
- 
-gulp.task('index-server-dev', function() {
+gulp.task('delete-dist-folder', function(){
+	del([paths.folderDist]);
+});
+
+gulp.task('replace-index-dev', function() {
 	del([paths.folderDev+'/index.html']);
 	
 	gulp.src(paths.folderDev+'/dev.html')
@@ -169,64 +183,92 @@ gulp.task('index-server-dev', function() {
         .pipe(gulp.dest('./'+paths.folderDev));
 });
 
-gulp.task('index-server-dist', function() {
+gulp.task('replace-index-dev-concat', function() {
 	del([paths.folderDev+'/index.html']);
 	
-	gulp.src(paths.folderDev+'/dist.html')
+	gulp.src(paths.folderDev+'/dev-concat.html')
 		.pipe(rename('index.html'))
         .pipe(gulp.dest('./'+paths.folderDev));
 });
 
-gulp.task('server-dev-concat', function() {
-  	gulp.src('./www-dev')
-	    .pipe(webserver({
-	    	host:'localhost',
-	    	port:8001,
-	    	//directoryListing: { path: 'www-dev' },
-	  		livereload: false,
-			//directoryListing: true,
-	      	open: true
-	    }));
+gulp.task('replace-index-dist', function() {
+	del([paths.folderDev+'/index.html']);
+	
+	gulp.src(paths.folderDev+'/dist.html')
+		.pipe(rename('index.html'))
+        .pipe(gulp.dest('./'+paths.folderDist));
 });
 
-gulp.task('server-dev', function() {
-  	gulp.src('./www-dev')
-	    .pipe(webserver({
-	    	host:'localhost',
-	    	port:8001,
-	    	//directoryListing: { path: 'www-dev' },
-	  		livereload: true,
-			//directoryListing: true,
-	      	open: true
-	    }));
+gulp.task('connect-dev-concat', function(){
+	connect.server({
+    	root: paths.folderDev,
+	    port: 8003,
+	    livereload: true
+  	});
 });
 
-gulp.task('server-build', function() {
-  	gulp.src('./www')
-	    .pipe(webserver({
-	    	host:'localhost',
-	    	port:8001,
-	  		livereload: true,
-			//directoryListing: true,
-	      	open: true
-	    }));
-});
-
-gulp.task('webserver-build', ['build-dist','index-server-dist','server-build']);
-
-gulp.task('webserver-dev', ['index-server-dev','server-dev','watch-jshint']);
-
-gulp.task('webserver-dev-concat', [
-	'ionic-sass',
+gulp.task('build-dist', [
+	'delete-dist-folder',
+	'replace-index-dist',
+	'sections-sass',
+	'sections-less',
 	'concat-css',
-	'minify-css',
 	'concat-js',
+	'minify-css',
 	'minify-js',
-	'index-server-dist',
-	'server-dev',
-	'watch-jshint',
-	'watch-dev-concat'
+	'minify-images',
+	'minify-html',
+	'copy-fonts',
+	'copy-vendors'
 ]);
+
+gulp.task('build-dev', [
+	'replace-index-dev',
+	'sections-sass',
+	'sections-less',
+	'concat-css',
+	'concat-js',
+]);
+
+gulp.task('build-dev-concat', [
+	'replace-index-dev-concat',
+	'sections-sass',
+	'sections-less',
+	'concat-js',
+	'concat-css'
+]);
+
+var options = {
+	uri: 'http://localhost:8003',
+	app: '/Applications/Google\ Chrome.app'
+};
+
+gulp.task('server-dev', [
+	'build-dev-concat',
+	'connect-dev-concat',
+	'watch-dev-concat'
+], function(){
+	gulp.src('./').pipe(open(options));
+});
+
+gulp.task('watch-dev-concat',[
+	//'ionic-sass', 
+	'sections-sass', 
+	'sections-less', 
+	'concat-js', 
+	'concat-css',
+	'jshint'
+], function(){
+	//gulp.watch(paths.ionicSass, ['ionic-sass']);
+	gulp.watch([paths.folderSass], ['sections-sass']);
+	gulp.watch([paths.folderLess], ['sections-less']);
+	gulp.watch([paths.folderJs], ['jshint','concat-js']);
+	gulp.watch([paths.folderCss], ['concat-css']);
+	gulp.watch([paths.folderHtml], ['html']);
+});
+
+
+
 
 
 

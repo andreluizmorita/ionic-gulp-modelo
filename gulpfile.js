@@ -12,7 +12,7 @@ var sh = require('shelljs');
 var jshint = require('gulp-jshint');
 var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify');
-var imageop = require('gulp-image-optimization');
+var imagemin = require('gulp-imagemin');
 var htmlmin = require('gulp-html-minifier');
 var deletefile = require('gulp-delete-file');
 var webserver = require('gulp-webserver');
@@ -54,8 +54,8 @@ gulp.task('ionic-sass', function(done) {
 gulp.task('sections-sass', function(done) {
 	return gulp.src([
 		paths.folderSass,
-		'!www-dev/sections/**/inc/*',
-		'!www-dev/sections/**/inc/**/*'
+		'!www-dev/sections/scss/**/inc/*',
+		'!www-dev/sections/scss/**/inc/**/*'
 	])
 	.pipe(sass())
 	.on('error', sass.logError)
@@ -65,8 +65,8 @@ gulp.task('sections-sass', function(done) {
 gulp.task('sections-less', function () {
   	return gulp.src([
   		paths.folderLess,
-		'!www-dev/sections/**/inc/*',
-		'!www-dev/sections/**/inc/**/*'
+		'!www-dev/sections/less/**/inc/*',
+		'!www-dev/sections/less/**/inc/**/*'
   	])
     .pipe(less())
     .pipe(gulp.dest(paths.folderDev+'/sections/'));
@@ -144,11 +144,12 @@ gulp.task('minify-images', function(cb) {
     	paths.folderDev+'/assets/img/**/*.gif',
     	paths.folderDev+'/assets/img/**/*.jpeg'
     ])
-    .pipe(imageop({
-        optimizationLevel: 5,
-        progressive: true,
-        interlaced: true
-    }))
+    .pipe(imagemin([
+	    imagemin.gifsicle({interlaced: true}),
+	    imagemin.jpegtran({progressive: true}),
+	    imagemin.optipng({optimizationLevel: 5}),
+	    imagemin.svgo({plugins: [{removeViewBox: true}]})
+	]))
     .pipe(gulp.dest(paths.folderDist+'/assets/img'))
 	.on('end', cb).on('error', cb);
 });
@@ -249,7 +250,7 @@ gulp.task('watch-dev-concat',[
 	gulp.watch([paths.folderHtml], ['html']);
 });
 
-/* INICIA O SERVIDOR WEB */
+/* INICIA O SERVIDOR PARA DESENVOLVIMENTO ELE CONCATENA OS ARQUIVOS CSS E JS - UTILIZA dev.html */
 gulp.task('server-dev', [
 	'build-dev-concat',
 	'connect-dev-concat',
@@ -258,15 +259,7 @@ gulp.task('server-dev', [
 	gulp.src('./').pipe(open(options));
 });
 
-gulp.task('build-www', [
-	'replace-index-www',
-	'sections-sass',
-	'sections-less',
-	'concat-css',
-	'concat-js',
-]);
-
-/* GERAR VERSÃO WWW CONCATENADA E COMPRIMIDA DO CSS E JS */
+/* GERAR VERSÃO WWW CONCATENADA E COMPRIMIDA DO CSS E JS - UTILIZA dist.html */
 gulp.task('build-www', [
 	'replace-index-www',
 	'sections-sass',

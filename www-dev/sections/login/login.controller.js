@@ -11,7 +11,7 @@ function LoginCtrl ($state,$scope,$http,$timeout,$window,APP,LoginFactory,Passpo
     var vm = this;
 
     // -- VARIABLES -----------
-    vm.formData = { username:'andre.morita@etapa.com.br', password:'teste' };
+    vm.formData = { username:'andreluizmorita@gmail.com', password:'andremorita' };
     //vm.formData = { username:'', password:'' };
 
     // -- FUNCTIONS -----------
@@ -32,11 +32,11 @@ function LoginCtrl ($state,$scope,$http,$timeout,$window,APP,LoginFactory,Passpo
             version_app: APP.system.version_app
         };
 
-        // LoginFactory.login( vm.postData, function(response) {
+        LoginFactory.login( vm.postData, function(response) {
             
-        // }, function(err) {
-        //     //AppService.growl('Ocorreu um erro, por favor tente novamente.','danger');
-        // });
+        }, function(err) {
+            //AppService.growl('Ocorreu um erro, por favor tente novamente.','danger');
+        });
     }
 
     // $timeout(function(){

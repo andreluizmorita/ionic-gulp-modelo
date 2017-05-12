@@ -28,8 +28,8 @@ angular
         },
         'passport':{
             'grant_type':'password',
-            'client_id':'4',
-            'client_secret':'9vVVuz8Bv0qHLSkeCtdm2KgG89fMG30Mt1ukaCWE',
+            'client_id':'1',
+            'client_secret':'FxnKWj7zndst2tJACVyxveC56j9GzUAZVpEgjcxt',
             'authenticated':false,
             'type':'passport'
 

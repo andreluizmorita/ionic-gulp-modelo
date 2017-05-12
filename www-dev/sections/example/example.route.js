@@ -17,7 +17,7 @@ function config ($stateProvider){
     })
     .state ('example.dash', {
         url: '/example-dash',
-        loginRequired: false,
+        loginRequired: true,
         views: {
 			'content-home': {
 				templateUrl: 'sections/example/example-dash.view.html',
@@ -28,7 +28,7 @@ function config ($stateProvider){
     })
     .state ('example.chats', {
         url: '/example-chats',
-        loginRequired: false,
+        loginRequired: true,
         views: {
 			'content-chats': {
 				templateUrl: 'sections/example/example-chats.view.html',
@@ -39,7 +39,7 @@ function config ($stateProvider){
     })
     .state ('example.chat', {
         url: '/example-chat/:chatId',
-        loginRequired: false,
+        loginRequired: true,
         views: {
             'content-chats': {
                 templateUrl: 'sections/example/example-chat-details.view.html',
@@ -50,7 +50,7 @@ function config ($stateProvider){
     })
     .state ('example.account', {
         url: '/example-account',
-        loginRequired: false,
+        loginRequired: true,
         views: {
 			'content-account': {
 				templateUrl: 'sections/example/example-account.view.html',

@@ -1,10 +1,14 @@
 angular.module('starter', [
-    'ionic',
+ 	'ionic',
     'ngResource', 
     'app.constants',
     'ui.router',
     'oc.lazyLoad',
     'app.module',
     'login.module',
-    'example.module'
+    'example.module',
+    'home.module',
+    'perfil.module',
+    'grupo.module',
+    'configuracoes.module'
 ]);

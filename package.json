@@ -20,13 +20,16 @@
     "gulp-open": "*",
     "gulp-rename": "*",
     "gulp-sass": "*",
+    "gulp-series": "^1.0.2",
     "gulp-serve": "*",
+    "gulp-shell": "^0.6.3",
     "gulp-sourcemaps": "*",
     "gulp-uglify": "*",
     "gulp-util": "*",
     "gulp-webserver": "*",
     "jshint": "*",
     "jshint-stylish": "*",
+    "run-sequence": "^1.2.2",
     "shelljs": "*"
   },
   "cordovaPlugins": [
@@ -37,6 +40,7 @@
     "ionic-plugin-keyboard"
   ],
   "cordovaPlatforms": [
-    "ios"
+    "ios",
+    "android"
   ]
 }

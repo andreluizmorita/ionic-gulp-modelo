@@ -19,7 +19,7 @@ function LoginCtrl ($state,$scope,$http,$timeout,$window,APP,LoginFactory,Passpo
 
     function logar() {
 
-        $state.go('example.dash');
+        //$state.go('example.dash');
 
         vm.postData = {
             username: vm.formData.username, 

@@ -9,6 +9,7 @@ var minifyCss = require('gulp-minify-css');
 var cleanCSS = require('gulp-clean-css');
 var rename = require('gulp-rename');
 var sh = require('shelljs');
+var shell = require('gulp-shell');
 var jshint = require('gulp-jshint');
 var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify');
@@ -21,6 +22,7 @@ var path = require('path');
 var less = require('gulp-less');
 var connect = require('gulp-connect');
 var open = require('gulp-open');
+var runSequence = require('run-sequence');
 
 var paths = {
 	folderDist: './www',
@@ -93,6 +95,7 @@ gulp.task('html', function () {
 });
 
 gulp.task('concat-js', function() {
+	/* --- Concatena todos os arquivo JS e salva na pasta www-dev/assets/js/script.js ---*/
 	return gulp.src([
 		paths.folderDev+'/sections/**/*.module.js',
 		paths.folderDev+'/sections/**/*.directive.js',
@@ -108,11 +111,12 @@ gulp.task('concat-js', function() {
 	.pipe(concat('scripts.js'))
 	.pipe(sourcemaps.write())
 	.pipe(gulp.dest(paths.folderDev+'/assets/js/'))
-	.pipe(gulp.dest(paths.folderDist+'/assets/js/'))
+	//.pipe(gulp.dest(paths.folderDist+'/assets/js/'))
 	.pipe(connect.reload());
 });
 
 gulp.task('concat-css', function() {
+	/* --- Concatena todos os arquivo CSS e salva na pasta www-dev/assets/css/styles.css ---*/
 	return gulp.src([
 		paths.folderDev+'/sections/**/*.css'
 	])
@@ -120,7 +124,7 @@ gulp.task('concat-css', function() {
 	.pipe(concat('styles.css'))
 	.pipe(sourcemaps.write())
 	.pipe(gulp.dest(paths.folderDev+'/assets/css/'))
-	.pipe(gulp.dest(paths.folderDist+'/assets/css/'))
+	//.pipe(gulp.dest(paths.folderDist+'/assets/css/'))
 	.pipe(connect.reload());
 });
 
@@ -137,8 +141,8 @@ gulp.task('minify-js', function (done) {
     .pipe(gulp.dest(paths.folderDist+'/assets/js'));
 });
 
-gulp.task('minify-images', function(cb) {
-    gulp.src([
+gulp.task('compress-images-www', function() {
+	gulp.src([
     	paths.folderDev+'/assets/img/**/*.png',
     	paths.folderDev+'/assets/img/**/*.jpg',
     	paths.folderDev+'/assets/img/**/*.gif',
@@ -150,8 +154,11 @@ gulp.task('minify-images', function(cb) {
 	    imagemin.optipng({optimizationLevel: 5}),
 	    imagemin.svgo({plugins: [{removeViewBox: true}]})
 	]))
-    .pipe(gulp.dest(paths.folderDist+'/assets/img'))
-	.on('end', cb).on('error', cb);
+    .pipe(gulp.dest(paths.folderDist+'/assets/img'));
+    
+	gulp.src(paths.folderDev+'/dist.html')
+	.pipe(rename('index.html'))
+    .pipe(gulp.dest('./'+paths.folderDist));
 });
 
 gulp.task('minify-html', function() {
@@ -175,10 +182,6 @@ gulp.task('copy-fonts', function(){
 		paths.folderDev+'/assets/fonts/**/*'
 	])
     .pipe(gulp.dest(paths.folderDist+'/assets/fonts'));
-});
-
-gulp.task('delete-dist-folder', function(){
-	del([paths.folderDist]);
 });
 
 gulp.task('replace-index-dev', function() {
@@ -213,20 +216,100 @@ gulp.task('connect-dev-concat', function(){
   	});
 });
 
-gulp.task('build-dist', [
-	'delete-dist-folder',
-	'replace-index-dist',
-	'sections-sass',
-	'sections-less',
-	'concat-css',
-	'concat-js',
-	'minify-css',
-	'minify-js',
-	'minify-images',
-	'minify-html',
+gulp.task('concat-minify-css-www', function(){
+	return gulp.src([
+		paths.folderDev+'/sections/**/*.css'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('styles.css'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDist+'/assets/css/'))
+	.pipe(rename('styles.min.js'))
+	.pipe(cleanCSS({debug: true}, function(details) {
+	    console.log(details.name + ': ' + details.stats.originalSize);
+	    console.log(details.name + ': ' + details.stats.minifiedSize);
+	}))
+	.pipe(gulp.dest(paths.folderDist+'/assets/css'));
+});
+
+gulp.task('concat-minify-js-www', function(){
+	return gulp.src([
+		paths.folderDev+'/sections/**/*.module.js',
+		paths.folderDev+'/sections/**/*.directive.js',
+		paths.folderDev+'/sections/**/*.filter.js',
+		paths.folderDev+'/sections/**/*.service.js',
+		paths.folderDev+'/sections/**/*.factory.js',
+		paths.folderDev+'/sections/**/*.run.js',
+		paths.folderDev+'/sections/**/*.route.js',
+		paths.folderDev+'/sections/**/*.js',
+		paths.folderDev+'/app.js'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('scripts.js'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDist+'/assets/js'))
+	.pipe(rename('scripts.min.js'))
+	.pipe(uglify())
+	.pipe(gulp.dest(paths.folderDist+'/assets/js'));
+});
+
+gulp.task('shell-ionic-serve', shell.task([
+  'ionic serve',
+  'clear'
+]));
+
+gulp.task('ionic-serve', function(done) {
+    runSequence('build-www', 'shell-ionic-serve', function() {
+        console.log('Run something else');
+        done();
+    });
+});
+gulp.task('build-www',[
+	'compress-images-www',
 	'copy-fonts',
 	'copy-vendors'
-]);
+],function(){
+
+    gulp.src([
+		paths.folderDev+'/sections/**/*.css'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('styles.css'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDist+'/assets/css/'))
+	.pipe(rename('styles.min.css'))
+	.pipe(cleanCSS({debug: true}, function(details) {
+	    console.log(details.name + ': ' + details.stats.originalSize);
+	    console.log(details.name + ': ' + details.stats.minifiedSize);
+	}))
+	.pipe(gulp.dest(paths.folderDist+'/assets/css/'));
+
+	gulp.src([
+		paths.folderDev+'/sections/**/*.module.js',
+		paths.folderDev+'/sections/**/*.directive.js',
+		paths.folderDev+'/sections/**/*.filter.js',
+		paths.folderDev+'/sections/**/*.service.js',
+		paths.folderDev+'/sections/**/*.factory.js',
+		paths.folderDev+'/sections/**/*.run.js',
+		paths.folderDev+'/sections/**/*.route.js',
+		paths.folderDev+'/sections/**/*.js',
+		paths.folderDev+'/app.js'
+	])
+	.pipe(sourcemaps.init())
+	.pipe(concat('scripts.js'))
+	.pipe(sourcemaps.write())
+	.pipe(gulp.dest(paths.folderDist+'/assets/js'))
+	.pipe(rename('scripts.min.js'))
+	.pipe(uglify())
+	.pipe(gulp.dest(paths.folderDist+'/assets/js'));
+
+    gulp.src([paths.folderHtml])
+	.pipe(htmlmin({
+		collapseWhitespace: true,
+		removeComments: true
+	}))
+	.pipe(gulp.dest(paths.folderDist+'/sections'));    
+});
 
 gulp.task('build-dev-concat', [
 	'replace-index-dev-concat',
@@ -250,27 +333,14 @@ gulp.task('watch-dev-concat',[
 	gulp.watch([paths.folderHtml], ['html']);
 });
 
-/* INICIA O SERVIDOR PARA DESENVOLVIMENTO ELE CONCATENA OS ARQUIVOS CSS E JS - UTILIZA dev.html */
-gulp.task('server-dev', [
+/* INICIA O SERVIDOR WEB */
+gulp.task('build-www-dev', [
 	'build-dev-concat',
 	'connect-dev-concat',
 	'watch-dev-concat'
 ], function(){
 	gulp.src('./').pipe(open(options));
 });
-
-/* GERAR VERSÃO WWW CONCATENADA E COMPRIMIDA DO CSS E JS - UTILIZA dist.html */
-gulp.task('build-www', [
-	'replace-index-www',
-	'sections-sass',
-	'sections-less',
-	'concat-css',
-	'concat-js',
-]);
-
-
-
-
 
 
 
